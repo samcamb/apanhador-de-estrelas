@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apanhador de Estrelas: Competição Amistosa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: #0f172a;
+            overflow: hidden;
+            color: #f1f5f9;
+        }
+        #game-wrapper {
+            display: flex;
+            flex-direction: column;
+            lg:flex-row;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 95vh;
+            max-height: 800px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            cursor: none;
+            order: 2;
+            lg:order-1;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 70%, #334155 100%);
+        }
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        #leaderboard-container {
+            width: 100%;
+            max-width: 320px;
+            height: 95vh;
+            max-height: 800px;
+            background-color: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            order: 1;
+            lg:order-2;
+        }
+        #leaderboard-container h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #f8fafc;
+        }
+        #leaderboard {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+        }
+        #leaderboard li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background-color: rgba(51, 65, 85, 0.3);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: background-color 0.2s;
+        }
+        #leaderboard li:first-child {
+            background-color: rgba(250, 204, 21, 0.2);
+            border: 1px solid rgba(250, 204, 21, 0.5);
+            font-weight: 700;
+        }
+        #leaderboard .player-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+        #leaderboard .player-score {
+            font-weight: 700;
+        }
+        #share-info {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            padding-top: 1rem;
+        }
+        #notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        #name-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        #name-modal-content {
+            background-color: #1e293b;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        #name-modal h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        #name-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background-color: #334155;
+            color: #f1f5f9;
+            margin-bottom: 1rem;
+        }
+        #name-submit {
+             width: 100%;
+            padding: 0.75rem;
+            background-color: #38bdf8;
+            color: #0f172a;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div id="score-display">⭐ 0</div>
+        </div>
+        <div id="leaderboard-container">
+            <h2>🏆 Placar de Líderes 🏆</h2>
+            <ul id="leaderboard">
+                <!-- Scores serão inseridos aqui -->
+            </ul>
+            <div id="share-info">
+                <p>Partilhe o link da página para convidar amigos!</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification">Link copiado para a área de transferência!</div>
+
+    <div id="name-modal">
+        <div id="name-modal-content">
+            <h2>Bem-vindo, Apanhador de Estrelas!</h2>
+            <p class="text-slate-400 mb-4">Digite o seu nome para entrar no ranking.</p>
+            <input type="text" id="name-input" placeholder="O seu nome..." maxlength="15">
+            <button id="name-submit">Entrar no Jogo</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Importações do Firebase ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuração do Firebase ---
+        // ATENÇÃO: Substitua estes valores pelos da configuração do seu próprio projeto Firebase
+        // Pode obter isto nas Definições do Projeto na consola do Firebase.
+        const firebaseConfig = {
+            apiKey: "AIzaSyYOUR_API_KEY_HERE",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // --- INSTRUÇÃO IMPORTANTE ---
+        // O código acima assume que está a usar o seu próprio Firebase.
+        // Se estiver a usar um ambiente que fornece a configuração (como este em que estamos),
+        // pode usar o código abaixo em vez do de cima.
+        // const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", projectId: "YOUR_PROJECT_ID" };
+        // const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-star-catcher';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Este nome de coleção deve ser único para si
+        const leaderboardCollectionName = 'leaderboard-star-catcher';
+
+        // --- Variáveis Globais ---
+        let userId;
+        let playerName;
+        let currentHighScore = 0;
+        const leaderboardCol = collection(db, leaderboardCollectionName);
+
+        // --- Elementos do DOM ---
+        const canvas = document.getElementById('gameCanvas');
+        const scoreDisplay = document.getElementById('score-display');
+        const leaderboardElement = document.getElementById('leaderboard');
+        const nameModal = document.getElementById('name-modal');
+        const nameInput = document.getElementById('name-input');
+        const nameSubmit = document.getElementById('name-submit');
+        const container = document.getElementById('game-container');
+        
+        const ctx = canvas.getContext('2d');
+
+        // --- Lógica de Autenticação e Setup ---
+        async function setup() {
+            try {
+                const userCredential = await signInAnonymously(auth);
+                userId = userCredential.user.uid;
+                console.log("Utilizador anónimo autenticado:", userId);
+                listenToLeaderboard();
+            } catch (error) {
+                console.error("Erro na autenticação anónima:", error);
+                alert("Não foi possível ligar ao ranking. Por favor, verifique a configuração do Firebase.");
+            }
+        }
+        
+        nameSubmit.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (name && userId) {
+                playerName = name;
+                nameModal.style.display = 'none';
+                initGame();
+            } else if (!name) {
+                 nameInput.placeholder = "Por favor, digite um nome!";
+            }
+        });
+
+        // --- Lógica do Ranking (Firestore) ---
+        function listenToLeaderboard() {
+            onSnapshot(leaderboardCol, (snapshot) => {
+                let players = [];
+                snapshot.forEach(doc => {
+                    players.push(doc.data());
+                });
+
+                players.sort((a, b) => b.score - a.score);
+                players = players.slice(0, 10);
+
+                leaderboardElement.innerHTML = '';
+                players.forEach(player => {
+                    const li = document.createElement('li');
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'player-name';
+                    nameSpan.textContent = player.name;
+
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.className = 'player-score';
+                    scoreSpan.textContent = `⭐ ${player.score}`;
+                    
+                    li.appendChild(nameSpan);
+                    li.appendChild(scoreSpan);
+
+                    if (player.playerId === userId) {
+                        li.style.border = '1px solid #38bdf8';
+                        currentHighScore = player.score;
+                    }
+
+                    leaderboardElement.appendChild(li);
+                });
+            });
+        }
+
+        async function updateHighScore(newScore) {
+            if (newScore > currentHighScore) {
+                currentHighScore = newScore;
+                const playerDocRef = doc(db, leaderboardCollectionName, userId);
+                try {
+                    await setDoc(playerDocRef, {
+                        name: playerName,
+                        score: newScore,
+                        playerId: userId
+                    });
+                } catch(e) {
+                    console.error("Erro ao guardar pontuação: ", e);
+                }
+            }
+        }
+
+        // --- Lógica do Jogo ---
+        let score = 0;
+        let stars = [];
+        const starCount = 30;
+        const player = { x: 0, y: 0, size: 60, emoji: '🌙' };
+
+        function initGame() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            
+            window.addEventListener('resize', () => {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            });
+
+            canvas.addEventListener('mousemove', movePlayer);
+            canvas.addEventListener('touchmove', movePlayer, { passive: true });
+            
+            stars = [];
+            for (let i = 0; i < starCount; i++) {
+                stars.push(new Star());
+            }
+
+            gameLoop();
+        }
+
+        function movePlayer(event) {
+            let canvasRect = canvas.getBoundingClientRect();
+            let newX, newY;
+            if (event.type === 'touchmove') {
+                newX = event.touches[0].clientX - canvasRect.left;
+                newY = event.touches[0].clientY - canvasRect.top;
+            } else {
+                newX = event.clientX - canvasRect.left;
+                newY = event.clientY - canvasRect.top;
+            }
+            const halfSize = player.size / 2;
+            player.x = Math.max(halfSize, Math.min(newX, canvas.width - halfSize));
+            player.y = Math.max(halfSize, Math.min(newY, canvas.height - halfSize));
+        }
+
+        class Star {
+            constructor() {
+                this.size = Math.random() * 20 + 10;
+                this.emoji = '⭐';
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height;
+                this.speed = Math.random() * 2 + 1;
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height + this.size) this.reset();
+            }
+            draw() {
+                ctx.font = `${this.size}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x, this.y);
+            }
+        }
+
+        function checkCollision(star) {
+            const distance = Math.hypot(player.x - star.x, player.y - star.y);
+            if (distance < (player.size / 2) + (star.size / 2)) {
+                score++;
+                scoreDisplay.textContent = `⭐ ${score}`;
+                updateHighScore(score);
+                star.reset();
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${player.size}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(player.emoji, player.x, player.y);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+                checkCollision(star);
+            });
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Inicia o processo de autenticação ---
+        setup();
+
+    </script>
+</body>
+</html>
+
