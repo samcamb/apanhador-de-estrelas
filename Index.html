@@ -115,19 +115,6 @@
             color: #94a3b8;
             padding-top: 1rem;
         }
-        #notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #10b981;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
         #name-modal {
             position: fixed;
             inset: 0;
@@ -187,8 +174,6 @@
             </div>
         </div>
     </div>
-    
-    <div id="notification">Link copiado para a área de transferência!</div>
 
     <div id="name-modal">
         <div id="name-modal-content">
@@ -206,29 +191,31 @@
         import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuração do Firebase ---
-        // ATENÇÃO: Substitua estes valores pelos da configuração do seu próprio projeto Firebase
-        // Pode obter isto nas Definições do Projeto na consola do Firebase.
-        const firebaseConfig = {
-            apiKey: "AIzaSyB_tg2lzqQCnV2x6OKY6Z5vsfu6enVH_9M",
-            authDomain: "apanhador-de-estrelas.firebaseapp.com",
-            projectId: "apanhador-de-estrelas",
-            storageBucket: "apanhador-de-estrelas.firebasestorage.app",
-            messagingSenderId: "636595534129",
-            appId: "1:636595534129:web:5f18b5f7b65042e82c9810"
+        // !!!!! IMPORTANTE !!!!!
+        // COLE AQUI O BLOCO DE CÓDIGO `firebaseConfig` QUE COPIOU DO SEU PROJETO NO PASSO 3 DO GUIA
+        
+            // Cole aqui. Exemplo:
+            // apiKey: "AIzaSyB...",
+            // authDomain: "jogo-estrelas.firebaseapp.com",
+            // ...
+            // Import the functions you need from the SDKs you need
+const firebaseConfig = {
+  apiKey: "AIzaSyB_tg2lzqQCnV2x6OKY6Z5vsfu6enVH_9M",
+  authDomain: "apanhador-de-estrelas.firebaseapp.com",
+  projectId: "apanhador-de-estrelas",
+  storageBucket: "apanhador-de-estrelas.firebasestorage.app",
+  messagingSenderId: "636595534129",
+  appId: "1:636595534129:web:5f18b5f7b65042e82c9810"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
         };
         
-        // --- INSTRUÇÃO IMPORTANTE ---
-        // O código acima assume que está a usar o seu próprio Firebase.
-        // Se estiver a usar um ambiente que fornece a configuração (como este em que estamos),
-        // pode usar o código abaixo em vez do de cima.
-        // const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", projectId: "YOUR_PROJECT_ID" };
-        // const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-star-catcher';
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // Este nome de coleção deve ser único para si
         const leaderboardCollectionName = 'leaderboard-star-catcher';
 
         // --- Variáveis Globais ---
@@ -257,7 +244,7 @@
                 listenToLeaderboard();
             } catch (error) {
                 console.error("Erro na autenticação anónima:", error);
-                alert("Não foi possível ligar ao ranking. Por favor, verifique a configuração do Firebase.");
+                alert("Não foi possível ligar ao ranking. Verifique se colou corretamente a configuração do Firebase.");
             }
         }
         
